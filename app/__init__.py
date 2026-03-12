@@ -1,12 +1,12 @@
 from flask import Flask
-from .extensions import db,login_manager,migrate
+from .extensions import db,login_manager,migrate,csrf,jwt
 from dotenv import load_dotenv
 import os
 from config import Config
 from .routes import blueprint_register
 
 def create_app():
-    load_dotenv()
+    
 
     app = Flask(__name__)
 
@@ -16,6 +16,8 @@ def create_app():
     db.init_app(app)
     login_manager.init_app(app)
     migrate.init_app(app,db)
+    csrf.init_app(app)
+    jwt.init_app(app)
 
     blueprint_register(app)
 
