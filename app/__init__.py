@@ -1,8 +1,6 @@
 from flask import Flask
 from .extensions import db,login_manager,migrate,csrf,jwt
-from dotenv import load_dotenv
-import os
-from config import Config
+from .config import Config
 from .routes import blueprint_register
 
 def create_app():

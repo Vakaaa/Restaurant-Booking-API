@@ -10,7 +10,15 @@ class User(db.Model):
     password_hash = db.Column(db.String(255),nullable=False)
     created_at = db.Column(db.DateTime,default=lambda:datetime.now(timezone.utc),nullable=False)
     role = db.Column(db.String(255),nullable=False,default="user")
-
+    
+    reservations = db.relationship(
+        "Reservation",
+        back_populates="users",
+        cascade="all,delete-orphan"
+        )
+    def __repr__(self):
+        return f"User {self.email}"
+    
 
     def set_password(self,password):
         self.password_hash=generate_password_hash(password)
