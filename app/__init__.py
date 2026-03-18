@@ -1,7 +1,8 @@
 from flask import Flask
-from .extensions import db,login_manager,migrate,csrf,jwt
+from .extensions import db,login_manager,migrate,jwt,ma
 from .config import Config
-from .routes import blueprint_register
+from app.routes import auth_bp
+
 
 def create_app():
     
@@ -14,10 +15,9 @@ def create_app():
     db.init_app(app)
     login_manager.init_app(app)
     migrate.init_app(app,db)
-    csrf.init_app(app)
     jwt.init_app(app)
-
-    blueprint_register(app)
+    ma.init_app(app)
+    app.register_blueprint(auth_bp)
 
     with app.app_context():
         from . import models

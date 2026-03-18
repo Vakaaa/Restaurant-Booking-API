@@ -1,26 +1,52 @@
-from flask import Blueprint,request,jsonify
-from werkzeug.security import check_password_hash
-from flask_jwt_extended import create_access_token
-from app.models.user import User
+from flask import Blueprint, request, jsonify 
+from flask_jwt_extended import jwt_required, get_jwt_identity  
+
+from app.schemas.auth_schema import RegisterSchema,LoginSchema
+from app.services.auth_service import AuthService
 
 
-auth_bp = Blueprint("auth",__name__,url_prefix="/auth")
+auth_bp = Blueprint("auth",__name__)
 
+@auth_bp.route("/register",methods=["POST"])
+def register():
+    data = request.get_json() or {}
+    errors = RegisterSchema().validate(data)
+    if errors:
+        return jsonify({"errors":errors}),400
+    user,error,status_code = AuthService.register(
+        full_name=data["full_name"],
+        email=data["email"],
+        password=data["password"]
+    )
+    if error:
+        return jsonify(error),status_code
 
-@auth_bp.post("/login")
+    return jsonify({
+        "message":"User saccessfully registered",
+        "user":user.to_dict()
+    }),status_code
+
+@auth_bp.route("/login",methods=["POST"])
 def login():
-    data = request.get_json(silent=True) or {}
-    email = request.get("email")
-    password = request.get("password")
-
-    if not email or not password:
-        return jsonify({"msg":"email and password required"}),400
+    data = request.get_json() or {}
+    errors = LoginSchema().validate(data)
+    if errors:
+        return jsonify({"errors":errors}),400
+    result,error,status_code = AuthService.login(
+        email=data["email"],
+        password = data["password"]
+    )
+    if error:
+        return jsonify(error),status_code
     
-    user = User.query.filter_by(email=email).first()
+    return jsonify(result),status_code
 
-    if not user or not check_password_hash(user.password_hash,password):
-        return jsonify({"msg":"bad credentials"}),401
+@auth_bp.route("/me",methods=["POST"])
+@jwt_required()
+def me():
+    user_id = get_jwt_identity()
+    user = AuthService.get_user_by_id(int(user_id))
+    if not user:
+        return jsonify({"error":"User not found"}),404
+    return user.to_dict(),200
     
-
-    acces_token = create_access_token(identity=user.id,additional_claims={"role":user.role})
-    return jsonify(acces_token=acces_token),200
