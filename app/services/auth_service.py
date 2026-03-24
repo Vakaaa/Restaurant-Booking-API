@@ -1,5 +1,6 @@
 from werkzeug.security import check_password_hash,generate_password_hash
 from flask_jwt_extended import create_access_token
+from sqlalchemy.exc import IntegrityError
 
 
 
@@ -27,7 +28,15 @@ class AuthService:
             password_hash = password_hash
         )
         db.session.add(user)
-        db.session.commit()
+        try:
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            return None,{"message":"Email is already existed"},409
+        except Exception:
+            db.session.rollback()
+            return None,{"message":"Register failed"},500
+
 
         return user, None ,201
     

@@ -1,0 +1,57 @@
+from flask import Blueprint,jsonify,request
+from flask_jwt_extended import jwt_required, get_jwt_identity
+
+from app.schemas.restaurant_schema import RestaurantSchema
+from marshmallow import ValidationError
+
+from app.models.user import User
+from app.services.restaurant_service import CreateRestaurant
+
+
+restaurant_bp = Blueprint("restaurant",__name__,url_prefix="/restaurant")
+
+
+def get_current_user():
+    user_id = get_jwt_identity()
+    return User.query.get(user_id)
+
+
+def admin_required():
+    current_user = get_current_user()
+    if not current_user or current_user.role != "admin":
+        return None,{"error":"Forbidden"},403
+    return current_user,None,None
+
+
+@restaurant_bp.route("",methods=["POST"])
+@jwt_required()
+def create_restaurant():
+    current_user,error,status_code = admin_required()
+    if error:
+        return jsonify(error),status_code
+    data = request.get_json() or {}
+    try:
+        validate_data = RestaurantSchema().load(data)
+    except ValidationError as err:
+        return jsonify({"errors":err.messages}),400
+    restaurant,error,status_code = CreateRestaurant.create_restaurant(
+        name = validate_data["name"],
+        address = validate_data["address"],
+        open_time = validate_data["open_time"],
+        close_time = validate_data["close_time"],
+        phone = validate_data.get("phone"),
+        description= validate_data.get("description")
+    )
+    if error:
+        return jsonify(error),status_code
+
+    return jsonify(
+        {"message":"Restaurant was created seccesfully","restaurant":restaurant.to_dict()}
+    ),201
+
+
+
+
+    
+
+

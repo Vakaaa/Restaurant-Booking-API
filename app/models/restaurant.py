@@ -3,6 +3,7 @@ from datetime import datetime,timezone
 
 class Restaurant(db.Model):
     __tablename__ = "restaurants"
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), nullable=False, unique=True)
     address = db.Column(db.String(255), nullable=False)
@@ -19,4 +20,16 @@ class Restaurant(db.Model):
     )
 
     def __repr__(self):
-        return f"Restaraunt {self.name}"
+        return f"Restaraunt {self.name}"    
+    
+    def to_dict(self):
+        return {
+            "id":self.id,
+            "name":self.name,
+            "address":self.address,
+            "phone":self.phone,
+            "description":self.description,
+            "open_time": self.open_time.isoformat() if self.open_time else None,
+            "close_time": self.close_time.isoformat() if self.close_time else None,
+            "created_at":self.created_at.isoformat()
+        }
