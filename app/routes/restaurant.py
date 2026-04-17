@@ -1,7 +1,7 @@
 from flask import Blueprint,jsonify,request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
-from app.schemas.restaurant_schema import RestaurantSchema
+from app.schemas.restaurant_schema import RestaurantSchema,RestaurantUpdateSchema
 from marshmallow import ValidationError
 
 from app.models.user import User
@@ -63,12 +63,50 @@ def get_all_restaurants():
         return jsonify(error),status_code
     return jsonify(result),status_code
 
-@restaurant_bp.route("<int:restaurant_id>",methods=["GET"])
+@restaurant_bp.route("/<int:restaurant_id>",methods=["GET"])
 def get_restaurant(restaurant_id:int):
     restaurant,error,status_code = RestaurantService.get_restaurant(restaurant_id=restaurant_id)
     if error:
         return jsonify(error),status_code
     return jsonify({"restaurant":restaurant.to_dict()}),status_code
+
+@restaurant_bp.route("/<int:restaurant_id>",methods=["PATCH"])
+@jwt_required()
+def update_restaurant(restaurant_id:int):
+    current_user,error,status_code = admin_required()
+    if error:
+        return jsonify(error),status_code
+    data = request.get_json() or {}
+    try:
+        validated_data = RestaurantUpdateSchema().load(data)
+    except ValidationError as err:
+        return jsonify({"errors":err.messages}),400
+    restaurant,error,status_code = RestaurantService.update_restaurant(restaurant_id=restaurant_id,data=validated_data)
+    if error:
+        return jsonify(error),status_code
+    return jsonify({
+        "message": "Restaurant updated successfully",
+        "restaurant": restaurant.to_dict()
+    }),status_code
+
+@restaurant_bp.route("/<int:restaurant_id>",methods=["DELETE"])
+@jwt_required()
+def delete_restaurant(restaurant_id:int):
+    current_user,error,status_code = admin_required()
+    if error:
+        return jsonify(error),status_code
+    existing_restaurant,error,status_code = RestaurantService.get_restaurant(restaurant_id=restaurant_id)
+    if error:
+        return jsonify(error),status_code
+    cur,error,status_code = RestaurantService.delete_restaurant(existing_restaurant)
+    if error:
+        return jsonify(error),status_code
+    return jsonify({"message":"Restaurant deleted successfully"}),status_code
+
+    
+    
+
+    
 
 
 

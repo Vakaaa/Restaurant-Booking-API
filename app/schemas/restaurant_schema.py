@@ -1,4 +1,4 @@
-from marshmallow import Schema,validate,fields,ValidationError,validates
+from marshmallow import Schema,validate,fields,ValidationError,validates,validates_schema
 
 class RestaurantSchema(Schema):
     name = fields.Str(
@@ -31,5 +31,31 @@ class RestaurantSchema(Schema):
         if not value.strip():
             raise ValidationError("Restaurant address cannot be empty")
 
-
-
+class RestaurantUpdateSchema(Schema):
+    name = fields.Str(
+        required=False,
+        validate = validate.Length(min=2,error = "Restaurant name required at least 2 symbols")
+    )
+    address = fields.Str(required=False)
+    phone = fields.Str(required=False, allow_none=True)
+    description = fields.Str(required=False, allow_none=True)
+    open_time = fields.Time(
+        required=False,
+        error_messages={"invalid": "Invalid time format"}
+    )
+    close_time = fields.Time(
+        required=False,
+        error_messages={"invalid": "Invalid time format"}
+    )
+    @validates("name")
+    def validate_name(self,value,**kwargs):
+        if not value.strip():
+            raise ValidationError("Restaurant name cannot be empty")
+    @validates("address")
+    def validate_address(self, value, **kwargs):
+        if not value.strip():
+            raise ValidationError("Restaurant address cannot be empty")
+    @validates_schema
+    def validate_not_empty(self, data, **kwargs):
+        if not data:
+            raise ValidationError("At least one field must be provided")
