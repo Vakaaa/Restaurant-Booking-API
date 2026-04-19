@@ -25,6 +25,15 @@ class Table(db.Model):
             name="uq_restaurant_table_number"
         ),
     )
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "restaurant_id": self.restaurant_id,
+            "table_number": self.table_number,
+            "seats": self.seats,
+            "is_active": self.is_active,
+            "created_at": self.created_at.isoformat()
+        }
 
     def __repr__(self):
         return f"<Table {self.table_number} in restaurant {self.restaurant_id}>"
