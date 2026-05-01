@@ -28,5 +28,18 @@ class Reservation(db.Model):
     users = db.relationship("User", back_populates="reservations")
     tables = db.relationship("Table", back_populates="reservations")
 
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "table_id": self.table_id,
+            "guest_name": self.guest_name,
+            "guests_count": self.guests_count,
+            "reservation_start": self.reservation_start.isoformat(),
+            "reservation_end": self.reservation_end.isoformat(),
+            "status": self.status,
+            "created_at": self.created_at.isoformat()
+        }
+
     def __repr__(self):
         return f"<Reservation {self.id} table={self.table_id}>"
